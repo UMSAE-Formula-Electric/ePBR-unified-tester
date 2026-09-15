@@ -1,0 +1,142 @@
+# Station configuration: how this PC reaches each instrument.
+#
+# Copy any block into config/station.local.toml to override it for your machine
+# without touching this file (station.local.toml is gitignored).
+#
+# Two ways to address an instrument:
+#   transport = "visa"    -> USB-TMC / GPIB / TCPIP through pyvisa
+#   transport = "serial"  -> a COM port through pyserial
+#
+# For serial instruments prefer `vid`/`pid`/`serial_number` over a hard-coded
+# `port`: Windows renumbers COM ports when you move a cable between USB jacks,
+# and the VID/PID lookup survives that. Run `python main.py ports` to list what
+# is plugged in right now, with the VID/PID of each device.
+
+
+# --- Power supply (BK Precision) -------------------------------------------
+# Model TBD. Most BK supplies speak plain SCPI over USB-serial; some of the
+# bench models enumerate as USB-TMC instead. Set `transport` to match, and
+# check the SCPI verbs in instruments/psu.py against your model's manual.
+[psu]
+enabled = true
+transport = "serial"        # "serial" or "visa"
+port = ""                   # e.g. "COM5"; leave empty to auto-detect by vid/pid
+vid = ""                    # e.g. "0x1AB1"
+pid = ""
+serial_number = ""
+baudrate = 9600
+timeout_s = 5.0
+visa_resource = ""          # e.g. "USB0::0xFFFF::0x9200::...::INSTR" when transport = "visa"
+visa_resource_regex = ""    # or match dynamically, e.g. "USB0::0x3121::.*::INSTR"
+channels = 1                # how many output channels the supply has
+off_on_exit = true          # drop the output when the driver context closes
+
+
+# --- Function generator (BK Precision 4052) --------------------------------
+# The 4050 series enumerates as a USB-TMC device and uses the Siglent-style
+# command set (C1:BSWV WVTP,SQUARE,FRQ,1000HZ,...). If yours came with the
+# RS-232 option instead, switch transport to "serial".
+[function_generator]
+enabled = true
+transport = "visa"
+visa_resource = ""
+visa_resource_regex = "USB[0-9]*::.*::INSTR"
+port = ""
+baudrate = 9600
+timeout_s = 5.0
+channels = 2
+default_channel = 1
+default_load = "HZ"         # "HZ" for high-Z, or an ohm value like "50"
+off_on_exit = true
+
+
+# --- Bench DMM (BK Precision 5492B) ----------------------------------------
+# The 5492B presents a USB virtual COM port and takes SCPI over it.
+# Default is 9600-8N1; check the DMM's I/O menu matches.
+[dmm]
+enabled = true
+transport = "serial"
+port = ""
+vid = ""
+pid = ""
+serial_number = ""
+baudrate = 9600
+timeout_s = 5.0
+# Seconds to wait after switching measurement function before reading, so the
+# DMM has settled. Raise it if you see the first reading of a step come out stale.
+settle_s = 0.3
+
+
+# --- Relay bank (R221A08, 8-channel, serial) -------------------------------
+# Same board as the work tester: fixed hex frames at 9600 baud.
+[relay]
+enabled = true
+transport = "serial"
+port = ""
+vid = ""
+pid = ""
+serial_number = ""
+baudrate = 9600
+timeout_s = 2.0
+channels = 8
+
+
+# --- DUT serial console -----------------------------------------------------
+# The latching board's own UART. `prompt_regex` is what SerialManager waits for
+# to know a command finished; set it to whatever your firmware prints.
+[dut_serial]
+enabled = true
+port = ""
+vid = ""
+pid = ""
+serial_number = ""
+baudrate = 115200
+timeout_s = 5.0
+prompt_regex = "~>"
+
+
+# ===========================================================================
+# Simulation
+# ===========================================================================
+# Canned replies used when SIMULATE=true (or `--simulate`). Each table maps a
+# command to the reply it should get; "*" is the fallback for anything else.
+#
+# This is what makes a dry run produce believable numbers instead of zeros, so
+# you can build and debug a whole tester before the hardware exists. It also
+# doubles as a written record of what the console protocol is supposed to look
+# like - which is worth having even once the board is on the bench.
+
+[psu.simulation]
+"*IDN?" = "SIMULATED,BK-PSU,0,1.0"
+"MEAS:VOLT?" = "12.01"
+"MEAS:CURR?" = "0.021"
+"VOLT?" = "12.000"
+"CURR?" = "0.500"
+"OUTP?" = "1"
+
+[function_generator.simulation]
+"*IDN?" = "SIMULATED,BK4052,0,1.0"
+"C1:BSWV?" = "C1:BSWV WVTP,SQUARE,FRQ,1000HZ,AMP,5V,OFST,2.5V,DUTY,50"
+
+[dmm.simulation]
+"*IDN?" = "SIMULATED,BK5492B,0,1.0"
+"MEAS:VOLT:DC?" = "12.01"
+"MEAS:VOLT:AC?" = "0.004"
+"MEAS:RES?" = "9.85"
+"MEAS:CURR:DC?" = "0.021"
+# A bare READ? depends on which function the DMM was last put into. Suffix a
+# key with @<function> to answer per mode; the plain key is the fallback.
+"READ?" = "12.01"
+"READ?@VOLT:DC" = "12.01"
+"READ?@RES" = "9.85"
+"READ?@CURR:DC" = "0.021"
+"FETC?" = "12.01"
+
+[dut_serial.simulation]
+# Keyed by the command text in SerialCommands, and matching the regex patterns
+# in the tester's config.py. Keep the two in step.
+"*" = "~>"
+"version" = "ePBR27-LB v1.2.3\n~>"
+"sn" = "SN EPBR27-LB-0042\n~>"
+"latch status" = "LATCH LATCHED CURRENT 120 mA\n~>"
+"rails" = "VIN  12034 mV\n3V3   3298 mV\n~>"

@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Tester output
+logs/*
+!logs/.gitkeep
+results/*
+!results/.gitkeep
+
+# Local station config / secrets
+.env
+config/station.local.toml
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

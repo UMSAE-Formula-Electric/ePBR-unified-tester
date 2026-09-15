@@ -1,0 +1,31 @@
+[project]
+name = "epbr27-unified-tester"
+version = "0.1.0"
+description = "Unified production tester framework for the ePBR27 Formula Electric car"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "click>=8.1",
+  "colorlog>=6.9",
+  "pyserial>=3.5",
+  "pyvisa>=1.14",
+  "pyvisa-py>=0.7",
+  "pyusb>=1.2",
+  "python-dotenv>=1.0",
+  "toml>=0.10.2",
+  "tomli-w>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6"]
+
+[project.scripts]
+epbr27 = "main:cli"
+
+[tool.ruff]
+line-length = 120
+lint.select = ["I", "E", "F"]
+
+[tool.setuptools]
+py-modules = ["main"]
+packages = ["config", "core", "instruments", "utils", "testers"]
