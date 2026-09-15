@@ -22,3 +22,6 @@ config/station.local.toml
 .idea/
 .DS_Store
 Thumbs.db
+
+# Tooling caches
+.ruff_cache/
