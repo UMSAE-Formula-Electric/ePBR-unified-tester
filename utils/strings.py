@@ -2,6 +2,9 @@
 
 A failed cast returns ERROR_RESULT (-9999) rather than raising, so a garbled
 reply is recorded as an out-of-limits measurement instead of an exception.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

@@ -5,6 +5,9 @@ the function with that name in the tester's modules, calls it with itself as the
 only argument, and the step reports measurements back via `runner.add_result()`.
 A step that raises does not stop the run - its results are recorded as failures
 and the next step goes ahead (see `test_step_result` in core.decorators).
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

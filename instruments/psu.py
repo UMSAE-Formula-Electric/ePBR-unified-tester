@@ -28,6 +28,9 @@ or, more usually, let the decorator handle it:
 
     @with_psu(PSU_Settings.LATCH_12V)
     def MY_STEP(runner): ...
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

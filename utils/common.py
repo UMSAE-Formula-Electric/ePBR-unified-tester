@@ -1,4 +1,8 @@
-"""Small numeric and timing helpers that show up in nearly every test step."""
+"""Small numeric and timing helpers that show up in nearly every test step.
+
+Author: Cedric Caparas
+Date:   2026-09-24
+"""
 
 from __future__ import annotations
 

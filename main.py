@@ -7,6 +7,9 @@
     python main.py check DMM-CHECK                validate the TOML wiring
     python main.py ports                          serial ports on this PC
     python main.py instruments                    ping each instrument
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

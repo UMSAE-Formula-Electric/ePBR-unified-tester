@@ -9,6 +9,9 @@ module supplies three implementations of that pair:
 
 Because the choice is config-driven, moving an instrument from USB-TMC to RS-232
 is a one-line edit in config/station.toml, not a driver rewrite.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

@@ -1,6 +1,9 @@
 """Instrument drivers. Import from here so tester code stays short:
 
     from instruments import PSU, PSU_Setting, DMM, Function, RelayBank
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from instruments.dmm import DMM, Function

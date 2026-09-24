@@ -1,4 +1,8 @@
-"""Framework core: logging, result assertion, the runner and its decorators."""
+"""Framework core: logging, result assertion, the runner and its decorators.
+
+Author: Cedric Caparas
+Date:   2026-09-24
+"""
 
 from core.decorators import (
     operator_confirm,

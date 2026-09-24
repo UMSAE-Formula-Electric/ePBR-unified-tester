@@ -17,6 +17,9 @@ prompts still dry-runs end to end without hanging.
 
 Ctrl+C at a prompt raises KeyboardInterrupt, which stops the run rather than
 being recorded as a test failure - an operator walking away is not a bad board.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

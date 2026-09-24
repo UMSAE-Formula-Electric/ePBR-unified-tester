@@ -11,6 +11,9 @@ A tester declares every measurement it can produce in `result_details.toml`:
 At runtime a test step calls `runner.add_result("LB_COIL_RESISTANCE", 9.7)` and
 the framework decides PASS/FAIL. Steps never assert for themselves, so the limits
 live in one reviewable file instead of being scattered through the test code.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

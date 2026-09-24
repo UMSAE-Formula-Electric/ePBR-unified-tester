@@ -3,6 +3,9 @@
 Instrument addressing lives in `config/station.toml` (checked in) and can be
 overridden per-machine by `config/station.local.toml` (gitignored) so the COM
 port numbers on your laptop don't fight with the ones on the pit bench PC.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

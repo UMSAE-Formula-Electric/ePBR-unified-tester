@@ -1,4 +1,8 @@
-"""Shared helpers: serial console, operator prompts, tolerance maths, casting, timing."""
+"""Shared helpers: serial console, operator prompts, tolerance maths, casting, timing.
+
+Author: Cedric Caparas
+Date:   2026-09-24
+"""
 
 from utils.common import frange, is_within_tolerance, wait_until
 from utils.operator import ask_float, ask_text, confirm, instruct, pause, select

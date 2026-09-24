@@ -3,6 +3,9 @@
 This is the seam that NetSuite/ERP occupied in the original framework. If you
 ever want results in a database or on a dashboard, add a class with a
 `write(run)` method and hand it to the TestRunner - nothing else changes.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

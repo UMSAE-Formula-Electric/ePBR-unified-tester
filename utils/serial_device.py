@@ -25,6 +25,9 @@ then in a step:
 
 The regex groups map onto the dataclass fields in order, so parsing failures
 surface as a clear ValueError instead of an IndexError three lines later.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

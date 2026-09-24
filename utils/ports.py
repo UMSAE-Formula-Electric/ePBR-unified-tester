@@ -6,6 +6,9 @@ Address devices by USB VID/PID (and serial number if you have two of the same
 adapter) and let this module resolve the port at connect time.
 
     python main.py ports     # list everything plugged in, with VID/PID
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

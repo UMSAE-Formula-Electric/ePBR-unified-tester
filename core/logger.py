@@ -8,6 +8,9 @@ Every module in the framework imports the same singleton:
 The console handler is colourised (colorlog). A file handler is attached the
 first time `start_run_log()` is called, so each test run gets its own file
 under logs/ that contains the full DEBUG stream regardless of console level.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

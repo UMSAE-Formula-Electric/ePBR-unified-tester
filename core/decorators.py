@@ -10,6 +10,9 @@ Stack them on a step function; the runner calls the outermost wrapper:
 
 Order matters. `test_step_result` goes outermost so it catches anything raised
 underneath, including failures in the setup/teardown decorators themselves.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

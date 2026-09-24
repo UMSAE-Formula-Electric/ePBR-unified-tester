@@ -16,6 +16,9 @@ Note on levels: the instrument is programmed in amplitude + offset, but test
 limits are almost always written as "low level / high level" volts. `FG_Setting`
 takes low_v/high_v and converts, so your tester config reads the way you think
 about the signal.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

@@ -23,6 +23,9 @@ or through the decorator, which handles the cleanup:
 
     @with_relay(RelayChannel.COIL_SENSE)
     def MY_STEP(runner): ...
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

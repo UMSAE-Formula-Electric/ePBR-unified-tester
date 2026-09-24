@@ -10,6 +10,9 @@ Directory contract for every tester under testers/:
         tester.py            top-level test steps
         tests/               more test steps, any depth of subfolders
         VERSION              tester version, recorded in every result file
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

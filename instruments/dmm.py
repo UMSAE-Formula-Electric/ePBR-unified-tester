@@ -23,6 +23,9 @@ Pair it with the relay bank to move one DMM around the board:
     def MY_STEP(runner):
         with DMM() as dmm:
             runner.add_result("LB_COIL_V", dmm.measure_dc_voltage())
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from __future__ import annotations

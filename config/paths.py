@@ -1,5 +1,8 @@
 """Filesystem layout. Everything resolves from the repo root, not the CWD,
 so the CLI behaves the same no matter where you run it from.
+
+Author: Cedric Caparas
+Date:   2026-09-24
 """
 
 from pathlib import Path

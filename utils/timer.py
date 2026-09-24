@@ -1,4 +1,8 @@
-"""Timing helpers for measurements that need repeating or bounding."""
+"""Timing helpers for measurements that need repeating or bounding.
+
+Author: Cedric Caparas
+Date:   2026-09-24
+"""
 
 from __future__ import annotations
 
