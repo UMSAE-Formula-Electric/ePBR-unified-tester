@@ -84,7 +84,7 @@ channels = 8
 # --- DUT serial console -----------------------------------------------------
 # A board's own UART, for when you write a board tester. `prompt_regex` is what
 # SerialManager waits for to know a command finished; set it to whatever your
-# firmware prints. Not used by the instrument_checkout tester.
+# firmware prints. Not used by the equipment_tests tester.
 [dut_serial]
 enabled = true
 port = ""

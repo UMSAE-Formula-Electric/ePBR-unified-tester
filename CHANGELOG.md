@@ -27,10 +27,13 @@ Initial framework.
   tester can be built and dry-run with no hardware attached.
 - **Operator prompts** (`utils/operator.py`) - questionary-backed confirm, text,
   number and select prompts that auto-answer when run unattended.
-- **Starter tester** `testers/instrument_checkout`, which checks the bench
-  instruments themselves: communication, FG programming, DMM zero/lead
-  resistance/open circuit/known resistor, and FG-into-DMM loopback checks for
-  DC level, square-wave average, duty cycle, sine RMS and frequency.
+- **Starter tester** `testers/equipment_tests`, which checks the bench
+  instruments themselves, one at a time: `dmm.py` (identity, zero, lead
+  resistance, open circuit, a bench supply and a marked resistor) and `fg.py`
+  (identity, waveform programming and readback, a front-panel check, output
+  control).
+- **Flexible tester layout** - steps are found in `tester.py`, in any top-level
+  `.py` file in the tester folder, and anywhere under `tests/`.
 
 Known placeholders, to close out on the bench:
 

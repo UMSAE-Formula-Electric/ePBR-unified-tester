@@ -120,18 +120,45 @@ def get_tester_version(tester_name: str) -> str:
     return UNKNOWN_VERSION
 
 
-def get_tester_module_paths(tester_name: str) -> List[str]:
-    """Import paths to search for a step function: tester.py first, then tests/**.py."""
-    root = f"testers.{tester_name}"
-    module_paths = [f"{root}.tester"]
+# Files in a tester folder that hold configuration rather than steps. They are
+# still imported if a step happens to live there, just searched last.
+SUPPORT_MODULES = ("config", "utils")
 
-    tests_dir = tester_path(tester_name) / "tests"
+
+def get_tester_module_paths(tester_name: str) -> List[str]:
+    """Import paths to search for a step function.
+
+    Order: tester.py, then any other top-level .py in the tester folder, then
+    everything under tests/. That means a tester can be laid out either way -
+    one file per subsystem at the top level (dmm.py, fg.py), or a tests/
+    folder - whichever suits the job.
+    """
+    root = f"testers.{tester_name}"
+    folder = tester_path(tester_name)
+    module_paths = []
+
+    if (folder / "tester.py").is_file():
+        module_paths.append(f"{root}.tester")
+
+    top_level = sorted(
+        f.stem
+        for f in folder.glob("*.py")
+        if f.stem not in {"__init__", "tester"} and f.stem not in SUPPORT_MODULES
+    )
+    module_paths.extend(f"{root}.{name}" for name in top_level)
+
+    tests_dir = folder / "tests"
     if tests_dir.is_dir():
         module_paths.extend(
             f"{root}.tests.{f.relative_to(tests_dir).with_suffix('').as_posix().replace('/', '.')}"
             for f in sorted(tests_dir.rglob("*.py"))
             if f.name != "__init__.py"
         )
+
+    # Searched last: a step is unlikely to live here, but importing costs nothing.
+    module_paths.extend(
+        f"{root}.{name}" for name in SUPPORT_MODULES if (folder / f"{name}.py").is_file()
+    )
 
     return module_paths
 
@@ -142,7 +169,7 @@ def get_available_test_steps(tester_name: str) -> List[str]:
     Parsed with ast rather than imported, so listing steps never touches hardware.
     """
     root = tester_path(tester_name)
-    module_files = [root / "tester.py"]
+    module_files = [f for f in root.glob("*.py") if f.stem != "__init__"]
     tests_dir = root / "tests"
     if tests_dir.is_dir():
         module_files.extend(f for f in tests_dir.rglob("*.py") if f.name != "__init__.py")

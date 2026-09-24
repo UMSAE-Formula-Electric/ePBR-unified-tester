@@ -1,12 +1,12 @@
 """ePBR27 unified tester - command line entry point.
 
-    python main.py run BENCH-COMMS -S BENCH01    run a checkout / a board
-    python main.py run BENCH-FULL -s DMM_IDENTITY  run one step only
-    python main.py list                            testers and part numbers
-    python main.py steps instrument_checkout       every runnable step
-    python main.py check BENCH-FULL                validate the TOML wiring
-    python main.py ports                           serial ports on this PC
-    python main.py instruments                     ping each instrument
+    python main.py run DMM-CHECK -S DMM01       run a check / a board
+    python main.py run DMM-CHECK -s DMM_IDENTITY  run one step only
+    python main.py list                           testers and part numbers
+    python main.py steps equipment_tests          every runnable step
+    python main.py check DMM-CHECK                validate the TOML wiring
+    python main.py ports                          serial ports on this PC
+    python main.py instruments                    ping each instrument
 """
 
 from __future__ import annotations

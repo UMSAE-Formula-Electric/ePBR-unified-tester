@@ -1,0 +1,58 @@
+# Two independent checks, one per instrument.
+#
+# They never run together, because with one USB cable only one instrument is
+# connected at a time. Plug in the DMM and run DMM-CHECK; swap the cable to the
+# function generator and run FG-CHECK.
+#
+#   python main.py run DMM-CHECK -S DMM01
+#   python main.py run FG-CHECK -S FG01
+#
+# Running a single step while you're setting things up:
+#
+#   python main.py run DMM-CHECK -s DMM_IDENTITY --no-save
+
+
+["DMM-CHECK"]
+desc = "BK 5492B: identity, zero, lead resistance, open circuit, a bench supply and a resistor"
+steps = [
+    "DMM_IDENTITY",
+    "DMM_SHORTED_LEADS",
+    "DMM_OPEN_LEADS",
+    "DMM_DC_VOLTAGE",
+    "DMM_RESISTANCE",
+    "DMM_TEARDOWN",
+]
+result_details = [
+    "DMM_RESPONDS",
+    "DMM_IDN",
+    "DMM_ZERO_V",
+    "DMM_LEAD_RESISTANCE",
+    "DMM_OPEN_CIRCUIT",
+    "DMM_SUPPLY_READING",
+    "DMM_SUPPLY_ERROR",
+    "DMM_RESISTOR_ERROR",
+    "DMM_TEARDOWN_SAFE",
+]
+
+
+["FG-CHECK"]
+desc = "BK 4052: identity, waveform programming and readback, front-panel check, output control"
+steps = [
+    "FG_IDENTITY",
+    "FG_PROGRAMMING",
+    "FG_DISPLAY_CHECK",
+    "FG_OUTPUT_CONTROL",
+    "FG_TEARDOWN",
+]
+result_details = [
+    "FG_RESPONDS",
+    "FG_IDN",
+    "FG_ACCEPTS_SETTINGS",
+    "FG_WAVEFORM_ECHO",
+    "FG_DISPLAY_SHAPE",
+    "FG_DISPLAY_FREQUENCY_ERROR",
+    "FG_DISPLAY_AMPLITUDE_ERROR",
+    "FG_OUTPUT_ENABLES",
+    "FG_OUTPUT_DISABLES",
+    "FG_TEARDOWN_SAFE",
+]

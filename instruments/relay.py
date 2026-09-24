@@ -228,7 +228,7 @@ class RelayChannel(IntEnum):
 
     Rename these to match how your fixture is actually wired - the point is that
     steps read as `relay.open_only(RelayChannel.COIL_SENSE)` rather than
-    `relay.open_only(3)`. Unused by the instrument_checkout tester, which needs
+    `relay.open_only(3)`. Unused by the equipment_tests tester, which needs
     no relay bank.
     """
 

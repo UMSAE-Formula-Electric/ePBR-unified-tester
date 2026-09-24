@@ -8,14 +8,15 @@ test runner, TOML-declared limits, decorator-wrapped steps, regex serial
 parsing), rebuilt around BK Precision bench instruments with no ERP integration.
 
 ```bash
-python main.py run BENCH-COMMS -S BENCH01 --simulate
+python main.py run DMM-CHECK --simulate
 ```
 
 That runs a complete test with no hardware attached. Start there.
 
-The tester shipped with it, `instrument_checkout`, tests the bench itself: the
-BK 4052 function generator and the BK 5492B DMM. It's a real check you'll use
-before trusting the bench, and a worked example of every pattern here.
+The tester shipped with it, `equipment_tests`, checks the two bench instruments
+themselves - the BK 5492B DMM and the BK 4052 function generator - one at a
+time, since there's one USB cable. It's a real check you'll use before trusting
+the bench, and a worked example of every pattern here.
 
 ---
 
@@ -99,10 +100,10 @@ copy .env.example .env
 Nothing plugged in? Run the whole thing simulated:
 
 ```bash
-python main.py run BENCH-COMMS -S BENCH01 --simulate
+python main.py run DMM-CHECK --simulate
 ```
 
-You should see four steps run, six results pass, and a JSON file appear under
+You should see six steps run, nine results pass, and a JSON file appear under
 `results/`. That confirms Python, the dependencies and the framework are all fine.
 
 Then see what's defined:
@@ -112,7 +113,7 @@ python main.py list
 ```
 
 ```bash
-python main.py steps instrument_checkout
+python main.py steps equipment_tests
 ```
 
 With the instruments plugged in, find them:
@@ -127,16 +128,21 @@ Put the COM ports (or better, the VID/PID) into `config/station.toml`, then:
 python main.py instruments
 ```
 
-That pings each instrument for its `*IDN?` string. Once they answer, run the
-real checkout:
+That pings each instrument for its `*IDN?` string. With only one connected, set
+`enabled = false` on the other in `config/station.toml` so it isn't tried.
+
+Then run the real check on whichever is plugged in:
 
 ```bash
-python main.py run BENCH-COMMS -S BENCH01
+python main.py run DMM-CHECK -S DMM01
 ```
 
-Then work up through `BENCH-FG`, `BENCH-DMM` and `BENCH-LOOPBACK` as you get
-leads and a cable together. See
-[testers/instrument_checkout/README.md](testers/instrument_checkout/README.md).
+```bash
+python main.py run FG-CHECK -S FG01
+```
+
+See [testers/equipment_tests/README.md](testers/equipment_tests/README.md) for
+what each step asks you to connect.
 
 ---
 
@@ -169,7 +175,7 @@ utils/
   strings.py            safe casting and extraction from console text
   timer.py              duration measurement
 testers/
-  instrument_checkout/   checks the FG and DMM themselves
+  equipment_tests/      dmm.py and fg.py - checks each instrument
 ```
 
 **The central idea:** a test step measures and reports; it never decides
@@ -196,25 +202,24 @@ A run works like this:
 ```python
 from core.decorators import operator_confirm, test_step_result
 from core.runner import TestRunner
-from testers.instrument_checkout.config import FG_Settings, Prompts
-from testers.instrument_checkout.utils import drive, measure_dc_volts
+from testers.equipment_tests.config import Prompts
+from testers.equipment_tests.utils import measure_dc_volts
 
 
-@test_step_result("BENCH_MY_MEASUREMENT")      # every result this step must produce
-@operator_confirm(Prompts.CONNECT_LOOPBACK)    # ask before touching anything
+@test_step_result("MY_MEASUREMENT")         # every result this step must produce
+@operator_confirm(Prompts.CONNECT_SUPPLY)   # ask before measuring anything
 def MY_STEP(runner: TestRunner):
     """One line on what this proves."""
-    with drive(FG_Settings.SQUARE_0_5V):       # FG on, and off again on exit
-        measured = measure_dc_volts()
-    runner.add_result("BENCH_MY_MEASUREMENT", measured)
+    measured = measure_dc_volts()
+    runner.add_result("MY_MEASUREMENT", measured)
 ```
 
-Then add `"MY_STEP"` to `steps` and `"BENCH_MY_MEASUREMENT"` to `result_details`
-in `parts.toml`, and define the limit in `result_details.toml`. Check the wiring
+Then add `"MY_STEP"` to `steps` and `"MY_MEASUREMENT"` to `result_details` in
+`parts.toml`, and define the limit in `result_details.toml`. Check the wiring
 without running anything:
 
 ```bash
-python main.py check BENCH-FULL
+python main.py check DMM-CHECK
 ```
 
 A board tester looks the same, with `@with_psu(...)` powering the DUT and
@@ -330,7 +335,7 @@ is never momentarily in a state where two nodes are connected to the meter at on
 ## Simulate mode
 
 ```bash
-python main.py run BENCH-FULL -S BENCH01 --simulate
+python main.py run DMM-CHECK --simulate
 ```
 
 Every instrument returns canned values from the `[*.simulation]` tables in
@@ -340,13 +345,13 @@ before the board exists, and to check your TOML wiring on a laptop.
 The tables also serve as a written record of what the console protocol is meant
 to look like, which stays useful once the hardware is real.
 
-**What it can't do:** the simulator is a lookup table with one canned value per
-instrument function, not a model of your bench. It can't return 0V for a shorted
-lead and 2.5V for a square-wave average on the same DMM function, so tests that
-measure *different* values through one function will fail under `--simulate`.
-That's expected rather than broken - the steps still run start to finish, which
-is what a dry run proves. `BENCH-COMMS` and `BENCH-FG` pass cleanly simulated;
-use them as the "is the framework healthy" check.
+**Its limit:** the simulator is a lookup table with one canned value per
+instrument function, not a model of your bench, so it can't return 0V for a
+shorted lead and 12V from a supply on the same DMM function. Where a step needs
+a specific stand-in it passes `sim_reading=` to the measurement helper - see
+`testers/equipment_tests/utils.py`. That argument is ignored entirely on real
+hardware. Both `DMM-CHECK` and `FG-CHECK` pass fully simulated, so either works
+as an "is the framework healthy" check.
 
 ---
 
@@ -360,12 +365,17 @@ testers/<your_tester>/
     result_details.toml     the limits
     config.py               rails, waveforms, relay map, serial commands, timing
     utils.py                helpers shared by steps
-    tester.py               top-level steps
-    tests/                  more steps, any folder depth
+    <anything>.py           steps, one file per subsystem
+    tests/                  or put them here, any folder depth
         __init__.py
 ```
 
-Copy `instrument_checkout`, rename it, and delete the steps you don't need.
+Steps are found in `tester.py`, in any other top-level `.py` file, and anywhere
+under `tests/`. Use whichever layout suits: `equipment_tests` puts one file per
+instrument at the top level, while a board tester with many steps is usually
+tidier with a `tests/` folder.
+
+Copy `equipment_tests`, rename it, and delete the steps you don't need.
 `python main.py list` will pick it up with no registration step.
 
 ---
@@ -387,7 +397,7 @@ python main.py -l DEBUG run ...              # verbose
 Run a single step while developing it:
 
 ```bash
-python main.py run BENCH-FULL -s DMM_SHORTED_LEADS --no-save
+python main.py run DMM-CHECK -s DMM_SHORTED_LEADS --no-save
 ```
 
 ---

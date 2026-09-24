@@ -1,0 +1,163 @@
+# Limits for the equipment tests.
+#
+# Set loose enough to catch a fault rather than to qualify either instrument
+# against its datasheet. Once you've run these a few times and seen the real
+# spread in results/summary.csv, tighten them - a limit that never comes close
+# to failing isn't testing anything.
+
+
+# ===========================================================================
+# DMM (dmm.py)
+# ===========================================================================
+
+# --- Identity --------------------------------------------------------------
+#
+# The IDN limit only asks for a plausible-looking string, so your first run
+# passes whatever the firmware reports. Afterwards, find the line
+# "DMM identifies as: ..." in the log and put something specific here, like
+# "5492B". That turns a connectivity check into a real identity check - the
+# thing that stops someone testing with the wrong meter plugged in.
+
+["DMM_RESPONDS"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "DMM answered *IDN?"
+
+["DMM_IDN"]
+validation_type = "regex"
+units = ""
+expected_value = ".{5,}"
+desc = "DMM identity string - tighten to the model number once you've seen it"
+
+
+# --- Leads -----------------------------------------------------------------
+
+["DMM_ZERO_V"]
+validation_type = "tolerance"
+units = "V"
+expected_value = 0.0
+tolerance = 0.01
+desc = "DC reading with the leads shorted - the meter's zero"
+
+["DMM_LEAD_RESISTANCE"]
+validation_type = "range"
+units = "ohm"
+min = 0.0
+max = 2.0
+desc = "The test leads' own resistance, shorted together"
+
+["DMM_OPEN_CIRCUIT"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "Resistance reads over-range with the leads apart"
+
+
+# --- Against known sources -------------------------------------------------
+#
+# The operator types in what the source is set to, so the error is what gets
+# judged and one limit covers any voltage or resistor value. The raw reading is
+# kept too, with a wide range, to catch the meter being on the wrong function.
+
+["DMM_SUPPLY_READING"]
+validation_type = "range"
+units = "V"
+min = 0.0
+max = 60.0
+desc = "Raw reading from the bench supply - a sanity range, not an accuracy limit"
+
+["DMM_SUPPLY_ERROR"]
+validation_type = "tolerance"
+units = "%"
+expected_value = 0.0
+tolerance = 2.0
+desc = "DMM against the supply's setting - includes the supply's own error"
+
+["DMM_RESISTOR_ERROR"]
+validation_type = "tolerance"
+units = "%"
+expected_value = 0.0
+tolerance = 10.0
+desc = "DMM against a marked resistor - wide, since the resistor's own tolerance is in here"
+
+
+# --- Fixture ---------------------------------------------------------------
+
+["DMM_TEARDOWN_SAFE"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "Operator confirmed the supply was switched off and disconnected"
+
+
+# ===========================================================================
+# Function generator (fg.py)
+# ===========================================================================
+
+["FG_RESPONDS"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "Function generator answered *IDN?"
+
+["FG_IDN"]
+validation_type = "regex"
+units = ""
+expected_value = ".{5,}"
+desc = "FG identity string - tighten to the model number once you've seen it"
+
+["FG_ACCEPTS_SETTINGS"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "FG accepted a full waveform definition without error"
+
+["FG_WAVEFORM_ECHO"]
+validation_type = "regex"
+units = ""
+expected_value = "(?i)squ"
+desc = "FG reads back the square wave it was given - proves the command set matches this model"
+
+
+# --- Read off the front panel ----------------------------------------------
+#
+# With no meter connected, the operator is the measurement. These limits are
+# wide because a person reading a display is only going to catch gross errors -
+# a factor of ten, a wrong unit, an amplitude halved by the 50 ohm load setting.
+
+["FG_DISPLAY_SHAPE"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "Front panel shows the square wave that was programmed"
+
+["FG_DISPLAY_FREQUENCY_ERROR"]
+validation_type = "below"
+units = "%"
+expected_value = 5.0
+desc = "Displayed frequency against the programmed 1kHz"
+
+["FG_DISPLAY_AMPLITUDE_ERROR"]
+validation_type = "below"
+units = "%"
+expected_value = 10.0
+desc = "Displayed amplitude against the programmed 5Vpp - a 50% error means the 50 ohm load setting"
+
+["FG_OUTPUT_ENABLES"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "Output indicator lit after the enable command"
+
+["FG_OUTPUT_DISABLES"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "Output indicator off after the disable command"
+
+["FG_TEARDOWN_SAFE"]
+validation_type = "boolean"
+units = ""
+expected_value = true
+desc = "All outputs switched off at the end of the run"
