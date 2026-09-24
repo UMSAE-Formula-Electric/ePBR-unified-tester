@@ -64,7 +64,7 @@ def get_all_part_numbers() -> Dict[str, Dict[str, str]]:
 
 
 def find_part_number_prefix(part_number: str) -> Optional[str]:
-    """parts.toml keys are prefixes, so 'EPBR27-LB-001-REV-A' matches key 'EPBR27-LB-001'."""
+    """parts.toml keys are prefixes, so 'EPBR27-PDB-001-REV-A' matches key 'EPBR27-PDB-001'."""
     best: Optional[str] = None
     for tester_name in get_all_testers():
         for key in get_parts_for_tester(tester_name):

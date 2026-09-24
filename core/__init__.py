@@ -1,6 +1,7 @@
 """Framework core: logging, result assertion, the runner and its decorators."""
 
 from core.decorators import (
+    operator_confirm,
     operator_prompt,
     requires_results,
     retry,
@@ -36,4 +37,5 @@ __all__ = [
     "skip_if",
     "requires_results",
     "operator_prompt",
+    "operator_confirm",
 ]

@@ -1,6 +1,7 @@
-"""Shared helpers: serial console, tolerance maths, string casting, timing."""
+"""Shared helpers: serial console, operator prompts, tolerance maths, casting, timing."""
 
 from utils.common import frange, is_within_tolerance, wait_until
+from utils.operator import ask_float, ask_text, confirm, instruct, pause, select
 from utils.serial_device import (
     BaseSerialCommandParser,
     SerialCommand,
@@ -19,6 +20,12 @@ __all__ = [
     "is_within_tolerance",
     "frange",
     "wait_until",
+    "confirm",
+    "instruct",
+    "pause",
+    "ask_text",
+    "ask_float",
+    "select",
     "pretty",
     "is_int",
     "cast_int",

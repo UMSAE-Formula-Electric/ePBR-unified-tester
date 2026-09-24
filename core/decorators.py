@@ -212,15 +212,39 @@ def requires_results(*result_ids: str) -> Callable:
 def operator_prompt(message: str) -> Callable:
     """Pause for the operator before the step runs (fixture changes, jumper moves).
 
-    Skipped automatically in simulate mode so dry runs stay unattended.
+    Skipped automatically when simulating or running unattended, so a tester
+    full of prompts still dry-runs end to end.
     """
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(runner: "TestRunner", *args: Any, **kwargs: Any) -> Any:
-            if not getattr(runner, "simulate", False):
-                logger.warning(f"OPERATOR: {message}")
-                input("Press Enter to continue...")
+            from utils.operator import pause
+
+            logger.warning(f"OPERATOR: {message}")
+            pause()
+            return func(runner, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def operator_confirm(message: str, default: bool = True) -> Callable:
+    """Ask the operator to confirm something before the step runs.
+
+    A "no" raises, so the step's results are recorded as failures by
+    `test_step_result` rather than the run carrying on against a fixture that
+    isn't set up. Auto-answers `default` when unattended.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(runner: "TestRunner", *args: Any, **kwargs: Any) -> Any:
+            from utils.operator import confirm
+
+            if not confirm(message, default=default):
+                raise RuntimeError(f"Operator declined: {message}")
             return func(runner, *args, **kwargs)
 
         return wrapper

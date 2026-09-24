@@ -25,7 +25,12 @@ Initial framework.
 - **CLI** (`main.py`) - `run`, `list`, `steps`, `check`, `ports`, `instruments`.
 - **Simulate mode** - canned instrument responses from `station.toml`, so a
   tester can be built and dry-run with no hardware attached.
-- **Starter tester** `testers/latching_board_tests` with worked example steps.
+- **Operator prompts** (`utils/operator.py`) - questionary-backed confirm, text,
+  number and select prompts that auto-answer when run unattended.
+- **Starter tester** `testers/instrument_checkout`, which checks the bench
+  instruments themselves: communication, FG programming, DMM zero/lead
+  resistance/open circuit/known resistor, and FG-into-DMM loopback checks for
+  DC level, square-wave average, duty cycle, sine RMS and frequency.
 
 Known placeholders, to close out on the bench:
 

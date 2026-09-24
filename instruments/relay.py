@@ -226,9 +226,10 @@ class RelayBank:
 class RelayChannel(IntEnum):
     """Name the channels for your fixture.
 
-    Rename these to match how the latching-board harness is actually wired -
-    the point is that steps read as `relay.open_only(RelayChannel.COIL_SENSE)`
-    instead of `relay.open_only(3)`.
+    Rename these to match how your fixture is actually wired - the point is that
+    steps read as `relay.open_only(RelayChannel.COIL_SENSE)` rather than
+    `relay.open_only(3)`. Unused by the instrument_checkout tester, which needs
+    no relay bank.
     """
 
     COIL_DRIVE = 1

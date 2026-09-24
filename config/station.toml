@@ -82,8 +82,9 @@ channels = 8
 
 
 # --- DUT serial console -----------------------------------------------------
-# The latching board's own UART. `prompt_regex` is what SerialManager waits for
-# to know a command finished; set it to whatever your firmware prints.
+# A board's own UART, for when you write a board tester. `prompt_regex` is what
+# SerialManager waits for to know a command finished; set it to whatever your
+# firmware prints. Not used by the instrument_checkout tester.
 [dut_serial]
 enabled = true
 port = ""
@@ -117,26 +118,30 @@ prompt_regex = "~>"
 [function_generator.simulation]
 "*IDN?" = "SIMULATED,BK4052,0,1.0"
 "C1:BSWV?" = "C1:BSWV WVTP,SQUARE,FRQ,1000HZ,AMP,5V,OFST,2.5V,DUTY,50"
+"C2:BSWV?" = "C2:BSWV WVTP,SQUARE,FRQ,1000HZ,AMP,5V,OFST,2.5V,DUTY,50"
 
 [dmm.simulation]
 "*IDN?" = "SIMULATED,BK5492B,0,1.0"
-"MEAS:VOLT:DC?" = "12.01"
-"MEAS:VOLT:AC?" = "0.004"
-"MEAS:RES?" = "9.85"
+"MEAS:VOLT:DC?" = "2.5"
+"MEAS:VOLT:AC?" = "0.7071"
+"MEAS:RES?" = "10000.0"
 "MEAS:CURR:DC?" = "0.021"
+"MEAS:FREQ?" = "1000.0"
 # A bare READ? depends on which function the DMM was last put into. Suffix a
 # key with @<function> to answer per mode; the plain key is the fallback.
-"READ?" = "12.01"
-"READ?@VOLT:DC" = "12.01"
-"READ?@RES" = "9.85"
+"READ?" = "2.5"
+"READ?@VOLT:DC" = "2.5"
+"READ?@VOLT:AC" = "0.7071"
+"READ?@RES" = "10000.0"
 "READ?@CURR:DC" = "0.021"
-"FETC?" = "12.01"
+"READ?@FREQ" = "1000.0"
+"FETC?" = "2.5"
 
 [dut_serial.simulation]
 # Keyed by the command text in SerialCommands, and matching the regex patterns
 # in the tester's config.py. Keep the two in step.
 "*" = "~>"
 "version" = "ePBR27-LB v1.2.3\n~>"
-"sn" = "SN EPBR27-LB-0042\n~>"
+"sn" = "SN EPBR27-0042\n~>"
 "latch status" = "LATCH LATCHED CURRENT 120 mA\n~>"
 "rails" = "VIN  12034 mV\n3V3   3298 mV\n~>"

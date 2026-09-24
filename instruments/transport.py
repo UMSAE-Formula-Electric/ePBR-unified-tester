@@ -87,6 +87,9 @@ class VisaTransport:
     def open(self) -> "VisaTransport":
         import pyvisa
 
+        if self.device is not None:
+            return self  # already open; opening twice would leak the handle
+
         self.rm = pyvisa.ResourceManager("@py")
         resource = self._discover()
         self.device = self.rm.open_resource(resource)
@@ -141,6 +144,9 @@ class SerialTransport:
 
     def open(self) -> "SerialTransport":
         import serial
+
+        if self.connection is not None and self.connection.is_open:
+            return self  # already open; a second open on the same COM port is refused
 
         self.connection = serial.Serial(port=self.port, baudrate=self.baudrate, timeout=self.timeout_s)
         logger.debug(f"Opened {self.name} on {self.port} @ {self.baudrate}")

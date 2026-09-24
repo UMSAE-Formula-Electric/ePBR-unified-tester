@@ -8,10 +8,14 @@ test runner, TOML-declared limits, decorator-wrapped steps, regex serial
 parsing), rebuilt around BK Precision bench instruments with no ERP integration.
 
 ```bash
-python main.py run EPBR27-LB-BRINGUP -S 0042 --simulate
+python main.py run BENCH-COMMS -S BENCH01 --simulate
 ```
 
 That runs a complete test with no hardware attached. Start there.
+
+The tester shipped with it, `instrument_checkout`, tests the bench itself: the
+BK 4052 function generator and the BK 5492B DMM. It's a real check you'll use
+before trusting the bench, and a worked example of every pattern here.
 
 ---
 
@@ -95,7 +99,7 @@ copy .env.example .env
 Nothing plugged in? Run the whole thing simulated:
 
 ```bash
-python main.py run EPBR27-LB-BRINGUP -S 0042 --simulate
+python main.py run BENCH-COMMS -S BENCH01 --simulate
 ```
 
 You should see four steps run, six results pass, and a JSON file appear under
@@ -108,10 +112,10 @@ python main.py list
 ```
 
 ```bash
-python main.py steps latching_board_tests
+python main.py steps instrument_checkout
 ```
 
-When hardware arrives, find your instruments:
+With the instruments plugged in, find them:
 
 ```bash
 python main.py ports
@@ -123,8 +127,16 @@ Put the COM ports (or better, the VID/PID) into `config/station.toml`, then:
 python main.py instruments
 ```
 
-That pings each instrument for its `*IDN?` string. Once they all answer, you're
-ready to test a real board.
+That pings each instrument for its `*IDN?` string. Once they answer, run the
+real checkout:
+
+```bash
+python main.py run BENCH-COMMS -S BENCH01
+```
+
+Then work up through `BENCH-FG`, `BENCH-DMM` and `BENCH-LOOPBACK` as you get
+leads and a cable together. See
+[testers/instrument_checkout/README.md](testers/instrument_checkout/README.md).
 
 ---
 
@@ -151,12 +163,13 @@ instruments/
   relay.py              R221A08 8-channel relay bank
 utils/
   serial_device.py      DUT console: commands, regex parsers, prompt handling
+  operator.py           questionary prompts, safe when unattended
   ports.py              finds COM ports by USB VID/PID
   common.py             tolerance, sweeps, waiting, sampling
   strings.py            safe casting and extraction from console text
   timer.py              duration measurement
 testers/
-  latching_board_tests/ your starter tester
+  instrument_checkout/   checks the FG and DMM themselves
 ```
 
 **The central idea:** a test step measures and reports; it never decides
@@ -181,26 +194,31 @@ A run works like this:
 ## Writing a test step
 
 ```python
-from core.decorators import test_step_result, with_psu
+from core.decorators import operator_confirm, test_step_result
 from core.runner import TestRunner
-from testers.latching_board_tests.config import PSU_Settings, Relays
-from testers.latching_board_tests.utils import measure_voltage_at
+from testers.instrument_checkout.config import FG_Settings, Prompts
+from testers.instrument_checkout.utils import drive, measure_dc_volts
 
 
-@test_step_result("LB_RAIL_3V3")          # every result this step must produce
-@with_psu(PSU_Settings.NOMINAL_12V)       # powered for the step, off afterwards
-def RAIL_CHECK(runner: TestRunner):
-    """One line on what this proves about the board."""
-    voltage = measure_voltage_at(Relays.SUPPLY_SENSE)
-    runner.add_result("LB_RAIL_3V3", voltage)
+@test_step_result("BENCH_MY_MEASUREMENT")      # every result this step must produce
+@operator_confirm(Prompts.CONNECT_LOOPBACK)    # ask before touching anything
+def MY_STEP(runner: TestRunner):
+    """One line on what this proves."""
+    with drive(FG_Settings.SQUARE_0_5V):       # FG on, and off again on exit
+        measured = measure_dc_volts()
+    runner.add_result("BENCH_MY_MEASUREMENT", measured)
 ```
 
-Then add `"RAIL_CHECK"` to `steps` and `"LB_RAIL_3V3"` to `result_details` in
-`parts.toml`, and define the limit in `result_details.toml`. Check the wiring:
+Then add `"MY_STEP"` to `steps` and `"BENCH_MY_MEASUREMENT"` to `result_details`
+in `parts.toml`, and define the limit in `result_details.toml`. Check the wiring
+without running anything:
 
 ```bash
-python main.py check EPBR27-LB-001
+python main.py check BENCH-FULL
 ```
+
+A board tester looks the same, with `@with_psu(...)` powering the DUT and
+`@with_relay(...)` routing the DMM to a test point.
 
 ### Available decorators
 
@@ -214,7 +232,8 @@ python main.py check EPBR27-LB-001
 | `@retry(attempts, delay_s)`    | Retries a flaky hardware call                                        |
 | `@skip_if(condition, reason)`  | Skips a step when a run-time condition holds                         |
 | `@requires_results(*ids)`      | Skips a step whose prerequisites never passed                        |
-| `@operator_prompt(message)`    | Waits for the operator (auto-skipped when simulating)                |
+| `@operator_prompt(message)`    | Waits for the operator (auto-skipped when unattended)                |
+| `@operator_confirm(message)`   | Asks yes/no first; a "no" fails the step instead of measuring        |
 | `@timed`                       | Logs how long a helper takes                                         |
 
 Order matters: `@test_step_result` goes **outermost** so it catches failures in
@@ -311,7 +330,7 @@ is never momentarily in a state where two nodes are connected to the meter at on
 ## Simulate mode
 
 ```bash
-python main.py run EPBR27-LB-001 -S 0042 --simulate
+python main.py run BENCH-FULL -S BENCH01 --simulate
 ```
 
 Every instrument returns canned values from the `[*.simulation]` tables in
@@ -321,11 +340,13 @@ before the board exists, and to check your TOML wiring on a laptop.
 The tables also serve as a written record of what the console protocol is meant
 to look like, which stays useful once the hardware is real.
 
-**What it can't do:** the simulator is a lookup table, not a model of your board.
-It can't make a pin go low in response to a command, so steps that check for
-*change* (latch clears, output toggles, a threshold sweep) will fail under
-`--simulate`. That's expected. `EPBR27-LB-BRINGUP` is the part number that passes
-cleanly simulated - use it as the "is the framework healthy" check.
+**What it can't do:** the simulator is a lookup table with one canned value per
+instrument function, not a model of your bench. It can't return 0V for a shorted
+lead and 2.5V for a square-wave average on the same DMM function, so tests that
+measure *different* values through one function will fail under `--simulate`.
+That's expected rather than broken - the steps still run start to finish, which
+is what a dry run proves. `BENCH-COMMS` and `BENCH-FG` pass cleanly simulated;
+use them as the "is the framework healthy" check.
 
 ---
 
@@ -344,7 +365,7 @@ testers/<your_tester>/
         __init__.py
 ```
 
-Copy `latching_board_tests`, rename it, and delete the steps you don't need.
+Copy `instrument_checkout`, rename it, and delete the steps you don't need.
 `python main.py list` will pick it up with no registration step.
 
 ---
@@ -366,7 +387,7 @@ python main.py -l DEBUG run ...              # verbose
 Run a single step while developing it:
 
 ```bash
-python main.py run EPBR27-LB-001 -s COIL_RESISTANCE_TEST --no-save
+python main.py run BENCH-FULL -s DMM_SHORTED_LEADS --no-save
 ```
 
 ---
