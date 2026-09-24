@@ -1,7 +1,7 @@
 [project]
-name = "epbr27-unified-tester"
+name = "epbr-unified-tester"
 version = "0.1.0"
-description = "Unified production tester framework for the ePBR27 Formula Electric car"
+description = "Unified production tester framework for the ePBR Formula Electric car"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -21,7 +21,7 @@ dependencies = [
 dev = ["ruff>=0.6"]
 
 [project.scripts]
-epbr27 = "main:cli"
+epbr = "main:cli"
 
 [tool.ruff]
 line-length = 120

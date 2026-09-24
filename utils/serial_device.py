@@ -111,7 +111,7 @@ class SerialCommand(Generic[T]):
         self.separator = separator
 
     def with_args(self, *args: Any) -> "SerialCommand[T]":
-        """Append arguments, e.g. SET_SN.with_args("EPBR27-0042") -> 'sn:EPBR27-0042'."""
+        """Append arguments, e.g. SET_SN.with_args("EPBR-0042") -> 'sn:EPBR-0042'."""
         command = self.command_str
         for arg in args:
             command += self.separator + str(arg)

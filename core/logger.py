@@ -20,7 +20,7 @@ from typing import Optional
 
 import colorlog
 
-LOGGER_NAME = "epbr27"
+LOGGER_NAME = "epbr"
 CONSOLE_FORMAT = "%(log_color)s%(asctime)s %(levelname)-8s%(reset)s %(message)s"
 FILE_FORMAT = "%(asctime)s %(levelname)-8s [%(name)s:%(module)s:%(lineno)d] %(message)s"
 DATE_FORMAT = "%H:%M:%S"

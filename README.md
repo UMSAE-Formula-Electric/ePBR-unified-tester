@@ -1,6 +1,6 @@
-# ePBR27 Unified Tester
+# ePBR Unified Tester
 
-Production test framework for the ePBR27 Formula Electric car. Boards get tested
+Production test framework for the ePBR Formula Electric car. Boards get tested
 by name, against limits declared in TOML, with results written to local files.
 
 Adapted from a production tester framework at work: same core ideas (data-driven

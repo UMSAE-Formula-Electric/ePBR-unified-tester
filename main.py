@@ -1,4 +1,4 @@
-"""ePBR27 unified tester - command line entry point.
+"""ePBR unified tester - command line entry point.
 
     python main.py run DMM-CHECK -S DMM01       run a check / a board
     python main.py run DMM-CHECK -s DMM_IDENTITY  run one step only
@@ -40,7 +40,7 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR"]
 @click.group()
 @click.option("-l", "--log-level", type=click.Choice(LOG_LEVELS, case_sensitive=False), default=None)
 def cli(log_level: str | None) -> None:
-    """Production tester for the ePBR27 Formula Electric car."""
+    """Production tester for the ePBR Formula Electric car."""
     logger.set_level(log_level or Env.LOG_LEVEL)
 
 
