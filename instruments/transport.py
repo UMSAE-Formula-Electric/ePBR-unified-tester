@@ -50,12 +50,16 @@ class VisaTransport:
         timeout_s: float = Timeouts.SCPI_S,
         read_delay_s: float = DEFAULT_READ_DELAY_S,
         name: str = "visa",
+        backend: str = "",
     ) -> None:
         self.resource = resource
         self.resource_regex = resource_regex
         self.timeout_s = timeout_s
         self.read_delay_s = read_delay_s
         self.name = name
+        # "" = try NI-VISA first then fall back to pyvisa-py; "@py" or "@ivi"
+        # to force one. Set it in station.toml as visa_backend.
+        self.backend = backend
         self.rm = None
         self.device = None
 
@@ -87,13 +91,38 @@ class VisaTransport:
         logger.debug(f"Discovered VISA resource for '{self.name}': {resources[0]}")
         return resources[0]
 
-    def open(self) -> "VisaTransport":
+    def _resource_manager(self):
+        """Open a VISA resource manager, preferring a real VISA install.
+
+        There are two ways to reach a USB-TMC instrument on Windows and they use
+        different drivers, so trying both is what makes either setup work:
+
+          NI-VISA (the default backend) - what BK recommends for the 4052, and
+            what its USBTMC note tells you to install.
+          pyvisa-py ("@py") - pure Python over libusb, which needs the device
+            bound to WinUSB with Zadig.
+
+        An explicit `visa_backend` in station.toml skips the guessing.
+        """
         import pyvisa
 
+        if self.backend:
+            logger.debug(f"[{self.name}] using VISA backend '{self.backend}'")
+            return pyvisa.ResourceManager(self.backend)
+
+        try:
+            rm = pyvisa.ResourceManager()
+            logger.debug(f"[{self.name}] using the installed VISA library")
+            return rm
+        except Exception as e:
+            logger.debug(f"[{self.name}] no system VISA ({e}), falling back to pyvisa-py")
+            return pyvisa.ResourceManager("@py")
+
+    def open(self) -> "VisaTransport":
         if self.device is not None:
             return self  # already open; opening twice would leak the handle
 
-        self.rm = pyvisa.ResourceManager("@py")
+        self.rm = self._resource_manager()
         resource = self._discover()
         self.device = self.rm.open_resource(resource)
         self.device.timeout = int(self.timeout_s * 1000)  # pyvisa wants ms
@@ -259,6 +288,7 @@ def build_transport(config: Dict[str, Any], name: str, simulate: Optional[bool] 
             resource_regex=config.get("visa_resource_regex", ""),
             timeout_s=timeout_s,
             name=name,
+            backend=config.get("visa_backend", ""),
         )
 
     if kind == "serial":

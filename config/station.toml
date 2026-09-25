@@ -41,6 +41,8 @@ enabled = true
 transport = "visa"
 visa_resource = ""
 visa_resource_regex = "USB[0-9]*::.*::INSTR"
+# "" tries NI-VISA first then pyvisa-py. Force one with "@ivi" or "@py".
+visa_backend = ""
 port = ""
 baudrate = 9600
 timeout_s = 5.0
