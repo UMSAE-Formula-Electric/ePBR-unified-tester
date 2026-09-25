@@ -2,18 +2,36 @@
 
 MODEL NOTES
 -----------
-The 5492B exposes a USB virtual COM port and takes SCPI over it (default
-9600-8N1; confirm under the DMM's I/O setup menu). The commands used here are
-the standard SCPI measurement set:
+The 5492B exposes a USB virtual COM port (a CP210x bridge, VID 0x10C4 /
+PID 0xEA60) and takes SCPI over it at 9600-8N1.
 
-    FUNC "VOLT:DC"       select function
-    MEAS:VOLT:DC?        one-shot configure + trigger + read
-    READ?                trigger + read using the current function
-    VOLT:DC:RANG 10      fix the range (much faster than autorange)
+Commands verified against a real unit (firmware Ver1.1.13.06.04) and against
+the manual's Chapter 6:
+
+    CONF:VOLT:DC         select the measurement function
+    READ?                trigger and read on the current function
+    CONF?                query the selected function, e.g. "volt:dc"
+    VOLT:DC:RANG 10      pin the range
+
+IMPORTANT - this instrument has no error queue and does not reject bad
+commands gracefully. An unsupported command silently wedges its SCPI parser,
+and every subsequent query times out until a valid command arrives. Two traps
+found the hard way:
+
+  * `FUNC "VOLT:DC"` is NOT accepted, despite being standard SCPI. Use
+    `CONF:<function>`. The wedge is silent, so the symptom is a working
+    connection whose reads all time out, and a function that never changed.
+  * `<function>:RANG:AUTO ON` works on VOLT:DC and RES but wedges the parser
+    on FREQ, VOLT:AC and CURR:DC. It is never sent automatically - CONFigure
+    already defaults the function's controls, autoranging included.
+
+So: only send commands from the `Scpi` class below, and only select functions
+listed in `Function`. Capacitance and temperature are deliberately absent -
+the 5492B cannot measure either, and asking it to wedges the parser.
 
 Two ways to take a reading:
 
-    dmm.measure_dc_voltage()          # one-shot, simplest, ~autoranges
+    dmm.measure_dc_voltage()          # one-shot: configure, trigger, read
     dmm.set_function(Function.DC_VOLTAGE, range_value=10)
     dmm.read()                        # repeat reads on a fixed range, faster
 
@@ -42,7 +60,11 @@ INVALID_RESULT = -9999.0
 
 
 class Function(Enum):
-    """SCPI function names, as the DMM expects them."""
+    """The functions this DMM actually has, per the manual's CONFigure list.
+
+    Anything not in here wedges the instrument's parser, so don't add a member
+    without confirming the hardware accepts `CONF:<value>` first.
+    """
 
     DC_VOLTAGE = "VOLT:DC"
     AC_VOLTAGE = "VOLT:AC"
@@ -50,24 +72,26 @@ class Function(Enum):
     AC_CURRENT = "CURR:AC"
     RESISTANCE = "RES"
     RESISTANCE_4W = "FRES"
-    CAPACITANCE = "CAP"
     FREQUENCY = "FREQ"
     PERIOD = "PER"
     DIODE = "DIOD"
     CONTINUITY = "CONT"
-    TEMPERATURE = "TEMP"
 
 
 class Scpi:
     IDENTIFY = "*IDN?"
     RESET = "*RST"
     CLEAR_STATUS = "*CLS"
-    SET_FUNCTION = 'FUNC "{function}"'
-    GET_FUNCTION = "FUNC?"
+    SET_FUNCTION = "CONF:{function}"
+    GET_FUNCTION = "CONF?"
     SET_RANGE = "{function}:RANG {range_value}"
+    # Present for completeness, but not sent automatically: it wedges the
+    # parser on several functions, and CONFigure already enables autoranging.
     SET_AUTO_RANGE = "{function}:RANG:AUTO ON"
     MEASURE = "MEAS:{function}?"
     READ = "READ?"
+    # FETCh returns the latest reading and needs a prior INITiate, so it is
+    # only meaningful straight after a READ?. Not reliable standalone here.
     FETCH = "FETC?"
     REMOTE = "SYST:REM"
     LOCAL = "SYST:LOC"
@@ -130,33 +154,56 @@ class DMM:
         self._function = None
 
     def set_function(self, function: Function, range_value: Optional[float] = None) -> None:
-        """Select a function, optionally pinning the range.
+        """Select a measurement function, optionally pinning the range.
 
-        Fixing the range is worth it whenever you read the same node repeatedly:
-        autoranging costs a few hundred ms per reading.
+        Sends `CONF:<function>`, which also resets that function's controls to
+        their defaults - autoranging included. No autorange command is sent,
+        because it wedges this instrument's parser on several functions.
+
+        Pass `range_value` to pin the range, which is worth doing when reading
+        the same node repeatedly: autoranging costs a few hundred ms a reading.
         """
+        if not isinstance(function, Function):
+            raise TypeError(f"Expected a Function, got {function!r}")
+
         if self._function is not function:
             self.write(Scpi.SET_FUNCTION.format(function=function.value))
             self._function = function
             time.sleep(self.settle_s)
 
-        if range_value is None:
-            self.write(Scpi.SET_AUTO_RANGE.format(function=function.value))
-        else:
+        if range_value is not None:
             self.write(Scpi.SET_RANGE.format(function=function.value, range_value=range_value))
+            time.sleep(self.settle_s)
+
+    def get_function(self) -> str:
+        """The function the DMM says it's on, e.g. "volt:dc".
+
+        Useful as a liveness check: if this comes back empty, the parser is
+        wedged and something sent a command the instrument doesn't accept.
+        """
+        return self.query(Scpi.GET_FUNCTION)
 
     def read(self) -> float:
         """Trigger and read using whatever function is already selected."""
         return self._query_float(Scpi.READ)
 
     def fetch(self) -> float:
-        """Re-read the last reading without re-triggering."""
+        """Re-read the last reading without re-triggering.
+
+        Only meaningful straight after a `read()`; on its own the instrument
+        has nothing initiated and stays silent.
+        """
         return self._query_float(Scpi.FETCH)
 
     def measure(self, function: Function) -> float:
-        """One-shot: configure, trigger and read in a single command."""
-        self._function = function
-        return self._query_float(Scpi.MEASURE.format(function=function.value))
+        """Configure the function and take one reading.
+
+        Uses CONFigure + READ? rather than `MEAS:<function>?`. The manual
+        defines them as equivalent, but MEAS is unreliable on this firmware -
+        `MEAS:RES?` in particular returns nothing.
+        """
+        self.set_function(function)
+        return self.read()
 
     # ---------------------------------------------------- convenience reads
 
@@ -174,9 +221,6 @@ class DMM:
 
     def measure_resistance(self, four_wire: bool = False) -> float:
         return self.measure(Function.RESISTANCE_4W if four_wire else Function.RESISTANCE)
-
-    def measure_capacitance(self) -> float:
-        return self.measure(Function.CAPACITANCE)
 
     def measure_frequency(self) -> float:
         return self.measure(Function.FREQUENCY)

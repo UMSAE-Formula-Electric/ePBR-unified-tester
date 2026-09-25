@@ -27,8 +27,8 @@ desc = "DMM answered *IDN?"
 ["DMM_IDN"]
 validation_type = "regex"
 units = ""
-expected_value = ".{5,}"
-desc = "DMM identity string - tighten to the model number once you've seen it"
+expected_value = "5492B"
+desc = "DMM identity string, e.g. 5492B Digital Multimeter,Ver1.1.13.06.04,343H18154"
 
 
 # --- Leads -----------------------------------------------------------------
