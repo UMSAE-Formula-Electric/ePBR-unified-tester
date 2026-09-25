@@ -1,6 +1,6 @@
 # ePBR Unified Tester
 
-Test framework for ePBR boards. Tests are defined per part number in TOML —
+Test framework for any HIL tests needed. Tests are defined per part number in TOML:
 which steps run, and the pass/fail limits for every measurement. Steps just
 measure and report; the limits decide pass/fail. Results go to `results/` as
 JSON and CSV, full logs to `logs/`.
